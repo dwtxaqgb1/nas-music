@@ -3,12 +3,6 @@
 # NAS音乐安装脚本
 # ============================================
 
-# 自动获取最新版（绕过ghproxy缓存）
-LATEST=$(curl -sSL "https://ghproxy.net/https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main/install.sh?t=$(date +%s)" 2>/dev/null)
-if [ -n "$LATEST" ] && echo "$LATEST" | grep -q "NAS音乐安装"; then
-    echo "$LATEST" > /tmp/nas_music_latest.sh
-    exec bash /tmp/nas_music_latest.sh
-fi
 
 echo "=========================================="
 echo "    NAS音乐安装"
