@@ -84,8 +84,8 @@ read -p "请输入选项 [默认 1]: " install_mode
 if [ "$install_mode" = "2" ]; then
     echo "卸载旧版本..."
     docker-compose -f $DATA_DIR/docker-compose.yml down 2>/dev/null
-    docker stop nas-music 2>/dev/null
-    docker rm nas-music 2>/dev/null
+    docker stop nas-music nas-music-lx 2>/dev/null
+    docker rm nas-music nas-music-lx 2>/dev/null
     rm -rf $DATA_DIR/data
 fi
 
@@ -128,13 +128,34 @@ if [ ! -s $DATA_DIR/web/index.html ] || [ ! -s $DATA_DIR/web/app.js ]; then
 fi
 echo "前端文件下载成功"
 
+# 生成nginx配置
+mkdir -p $DATA_DIR/nginx
+cat > $DATA_DIR/nginx/default.conf <<'NGINXEOF'
+server {
+    listen 80;
+    server_name _;
+
+    location /api/ {
+        proxy_pass http://lxserver:9527;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location / {
+        proxy_pass http://lxserver:9527;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+NGINXEOF
+
 # 生成docker-compose.yml
 echo "生成配置文件..."
 cat > $DATA_DIR/docker-compose.yml <<EOF
 services:
   lxserver:
     image: xcq0607/lxserver:$LX_VERSION
-    container_name: nas-music
+    container_name: nas-music-lx
     restart: unless-stopped
     environment:
       - FRONTEND_PASSWORD=$PASSWORD
@@ -143,8 +164,24 @@ services:
       - $DATA_DIR/data:/server/data
       - $MUSIC_DIR:/server/cache
       - $DATA_DIR/web:/server/public
+    networks:
+      - nas-music-net
+
+  nginx:
+    image: nginx:alpine
+    container_name: nas-music
+    restart: unless-stopped
     ports:
-      - "$PORT:9527"
+      - "$PORT:80"
+    volumes:
+      - $DATA_DIR/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - lxserver
+    networks:
+      - nas-music-net
+
+networks:
+  nas-music-net:
 EOF
 
 # 启动
