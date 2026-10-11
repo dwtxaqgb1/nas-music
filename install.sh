@@ -114,6 +114,13 @@ curl -sSL "$GITHUB_RAW/app/web/index.html" -o $DATA_DIR/web/index.html
 curl -sSL "$GITHUB_RAW/app/web/app.js" -o $DATA_DIR/web/app.js
 curl -sSL "$GITHUB_RAW/app/web/style.css" -o $DATA_DIR/web/style.css
 
+# 检查前端文件是否下载成功
+if [ ! -s $DATA_DIR/web/index.html ] || [ ! -s $DATA_DIR/web/app.js ]; then
+    echo "错误：前端文件下载失败，请检查网络或加速地址"
+    exit 1
+fi
+echo "前端文件下载成功"
+
 # 生成docker-compose.yml
 echo "生成配置文件..."
 cat > $DATA_DIR/docker-compose.yml <<EOF
