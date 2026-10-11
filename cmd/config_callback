@@ -1,0 +1,68 @@
+#!/bin/bash
+# 配置变更回调：用户在飞牛应用设置中修改参数后触发。
+# 重新应用端口、密码、下载目录等变更，并重启相关服务。
+set -u
+
+COMPOSE_FILE="${TRIM_APPDEST}/docker-compose.yml"
+CONFIG_FILE="${TRIM_PKGVAR}/data/config.js"
+BRIDGE_FLAG="${TRIM_PKGVAR}/bridge_enabled"
+BRIDGE_ENV="${TRIM_PKGVAR}/bridge.env"
+
+sed_escape() {
+    printf '%s' "$1" | sed -e 's/[\\&|]/\\&/g' -e 's/$/\\n/' | tr -d '\n' | sed 's/\\n$//'
+}
+
+CHANGED=0
+
+# 端口变更
+if [ -n "${wizard_port:-}" ]; then
+    case "$wizard_port" in
+        ''|*[!0-9]*) ;;
+        *)
+            if grep -q '"5200:80"' "$COMPOSE_FILE" 2>/dev/null; then
+                sed -i "s|\"5200:80\"|\"${wizard_port}:80\"|" "$COMPOSE_FILE"
+                CHANGED=1
+            fi
+            ;;
+    esac
+fi
+
+# 密码变更
+if [ -n "${wizard_password:-}" ]; then
+    ESCAPED_PWD=$(sed_escape "$wizard_password")
+    if grep -q 'FRONTEND_PASSWORD=' "$COMPOSE_FILE" 2>/dev/null; then
+        sed -i "s|FRONTEND_PASSWORD=.*|FRONTEND_PASSWORD=${ESCAPED_PWD}|" "$COMPOSE_FILE"
+        CHANGED=1
+    fi
+fi
+
+# 下载目录变更
+if [ -n "${wizard_musicdir:-}" ]; then
+    mkdir -p "$wizard_musicdir"
+    ESCAPED_MUSICDIR=$(sed_escape "$wizard_musicdir")
+    if grep -q 'TRIM_PKGVAR}/cache:/server/cache' "$COMPOSE_FILE" 2>/dev/null; then
+        sed -i "s|\\\${TRIM_PKGVAR}/cache:/server/cache|${ESCAPED_MUSICDIR}:/server/cache|" "$COMPOSE_FILE"
+        CHANGED=1
+    fi
+    # 同步更新桥接缓存目录
+    if [ -f "$BRIDGE_ENV" ]; then
+        sed -i "s|^BRIDGE_CACHE=.*|BRIDGE_CACHE=${wizard_musicdir}|" "$BRIDGE_ENV"
+    fi
+fi
+
+# 播放模式变更
+if [ -n "${wizard_play_mode:-}" ] && [ -f "$BRIDGE_ENV" ]; then
+    PM="stream"; [ "$wizard_play_mode" = "2" ] && PM="download"
+    sed -i "s|^PLAY_MODE=.*|PLAY_MODE=${PM}|" "$BRIDGE_ENV"
+    CHANGED=1
+fi
+
+# 有变更则重启服务
+if [ "$CHANGED" = "1" ]; then
+    docker restart nas-music-download >/dev/null 2>&1
+    if [ -f "$BRIDGE_FLAG" ]; then
+        systemctl restart lx-bridge 2>/dev/null || true
+    fi
+fi
+
+exit 0

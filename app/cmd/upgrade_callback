@@ -1,0 +1,85 @@
+#!/bin/bash
+# 升级后回调：重新部署桥接脚本与 systemd 单元，保留用户配置，重启服务。
+# 与 install_callback 的区别：不重新克隆 fnmusic-ext、不覆盖用户已有的 .env / bridge.env / config.js。
+set -u
+
+COMPOSE_FILE="${TRIM_APPDEST}/docker-compose.yml"
+BRIDGE_FLAG="${TRIM_PKGVAR}/bridge_enabled"
+BRIDGE_ENV="${TRIM_PKGVAR}/bridge.env"
+FNME_DIR="/vol1/@appcenter/fnmusic-ext/repo"
+
+# 1. 总是更新桥接脚本（升级可能包含修复）
+if [ -f "${TRIM_APPDEST}/lx_bridge.py" ]; then
+    cp "${TRIM_APPDEST}/lx_bridge.py" /usr/local/bin/lx_bridge.py
+    chmod +x /usr/local/bin/lx_bridge.py
+fi
+
+# 2. 如果桥接已启用，重建 systemd 单元并重启
+if [ -f "$BRIDGE_FLAG" ]; then
+    # 从已有 bridge.env 读取配置（保留用户设置）
+    BRIDGE_PORT="8773"
+    BRIDGE_CACHE="/vol1/1000/音乐/歌曲下载"
+    NMD_URL="http://127.0.0.1:5200"
+    PM="stream"
+    if [ -f "$BRIDGE_ENV" ]; then
+        # shellcheck disable=SC1090
+        . "$BRIDGE_ENV"
+    fi
+
+    # 重建 lx-bridge.service（单元格式可能随版本变化）
+    cat > /etc/systemd/system/lx-bridge.service <<UNIT
+[Unit]
+Description=fnmusic-ext <-> lxserver bridge
+After=network.target docker.service
+
+[Service]
+Type=simple
+Environment=NMD_URL=${NMD_URL}
+Environment=CACHE_DIR=${BRIDGE_CACHE}
+Environment=SELF_URL=http://127.0.0.1:${BRIDGE_PORT}
+Environment=BRIDGE_PORT=${BRIDGE_PORT}
+Environment=PLAY_MODE=${PM}
+ExecStart=/usr/bin/python3 /usr/local/bin/lx_bridge.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+    # fnmusic-ext.service 仅在不存在时重建（避免覆盖用户自定义）
+    if [ ! -f /etc/systemd/system/fnmusic-ext.service ] && [ -d "$FNME_DIR" ]; then
+        cat > /etc/systemd/system/fnmusic-ext.service <<UNIT
+[Unit]
+Description=fnmusic-ext Proxy Service (Socket Takeover)
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$FNME_DIR
+ExecStart=/bin/bash "$FNME_DIR/proxy/run_proxy.sh"
+ExecStartPost=/usr/bin/python3 "$FNME_DIR/proxy/takeover.py" ready --timeout 65
+ExecStopPost=/usr/bin/python3 "$FNME_DIR/proxy/takeover.py" restore
+TimeoutStartSec=75
+TimeoutStopSec=20
+KillMode=mixed
+Restart=no
+UMask=0077
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+    fi
+
+    systemctl daemon-reload
+    systemctl enable lx-bridge 2>/dev/null
+    # 重启桥接以加载新代码（fnmusic-ext 不强制重启，避免中断播放）
+    systemctl restart lx-bridge 2>/dev/null || true
+fi
+
+# 3. 重启 lxserver 以加载新版本的静态 web 文件
+docker restart nas-music-download >/dev/null 2>&1
+
+exit 0

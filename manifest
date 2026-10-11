@@ -1,0 +1,17 @@
+appname                    = com.nasmusic.download
+version                    = 17.3.6
+display_name               = NAS歌曲下载
+desc                       = 基于落雪音乐(lxserver)的NAS歌曲搜索、播放与下载工具，桥接飞牛音乐App。支持边下边播/下完再播、音源仓库一键导入。鸣谢：落雪音乐(LX-Music)、fnmusic-ext项目。
+platform                   = x86
+source                     = thirdparty
+maintainer                 = nas-music
+distributor                = nas-music
+desktop_uidir              = ui
+desktop_applaunchname      = com.nasmusic.download.main
+service_port               = 5200
+checkport                  = false
+ctl_stop                   = true
+disable_authorization_path = false
+micro_app                  = false
+os_min_ver                 = 0.9.0
+checksum                   = e89b84becb045ad936116751ac0872e6
