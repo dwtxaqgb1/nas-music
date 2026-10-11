@@ -35,3 +35,8 @@ docker rmi xcq0607/lxserver nginx:alpine node:20-alpine
 rm -rf /opt/nas-music
 pkill -f lx_bridge.py
 ```
+
+## 鸣谢
+
+- [落雪音乐 LX Music](https://github.com/lyswhut/lx-music-desktop) - 开源音乐播放器
+- [飞牛音乐链接](https://github.com/dwtxaqgb1/nas-music) - 本项目
