@@ -21,6 +21,9 @@ MUSIC_DIR=/opt/nas-music/music
 # 落雪后端版本（可选：v2.0.2稳定版 / latest最新版）
 LX_VERSION=v2.0.2
 
+# GitHub加速地址（如raw.githubusercontent.com不通，改成加速地址）
+GITHUB_RAW="https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
+
 # ============================================
 # 以下为安装逻辑，一般不需要修改
 # ============================================
@@ -54,9 +57,18 @@ mkdir -p $DATA_DIR/web
 
 # 下载定制前端文件
 echo "下载前端文件..."
-curl -sSL "https://github.com/dwtxaqgb1/nas-music/raw/main/app/web/index.html" -o $DATA_DIR/web/index.html
-curl -sSL "https://github.com/dwtxaqgb1/nas-music/raw/main/app/web/app.js" -o $DATA_DIR/web/app.js
-curl -sSL "https://github.com/dwtxaqgb1/nas-music/raw/main/app/web/style.css" -o $DATA_DIR/web/style.css
+curl -sSL "$GITHUB_RAW/app/web/index.html" -o $DATA_DIR/web/index.html
+curl -sSL "$GITHUB_RAW/app/web/app.js" -o $DATA_DIR/web/app.js
+curl -sSL "$GITHUB_RAW/app/web/style.css" -o $DATA_DIR/web/style.css
+
+# 检查文件是否下载成功
+if [ ! -s $DATA_DIR/web/index.html ]; then
+    echo "GitHub直连失败，尝试加速地址..."
+    GITHUB_RAW="https://github.dwtxaqgb1.eu.org/dwtxaqgb1/nas-music/raw/main"
+    curl -sSL "$GITHUB_RAW/app/web/index.html" -o $DATA_DIR/web/index.html
+    curl -sSL "$GITHUB_RAW/app/web/app.js" -o $DATA_DIR/web/app.js
+    curl -sSL "$GITHUB_RAW/app/web/style.css" -o $DATA_DIR/web/style.css
+fi
 
 # 生成docker-compose.yml
 echo "生成配置文件..."
