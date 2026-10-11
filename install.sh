@@ -98,10 +98,6 @@ curl -sSL "$GITHUB_RAW/app/web/style.css" -o $DATA_DIR/web/style.css
 curl -sSL "$GITHUB_RAW/app/lx_bridge.py" -o $DATA_DIR/lx_bridge.py
 curl -sSL "$GITHUB_RAW/app/sidecar/server.js" -o $DATA_DIR/sidecar/server.js
 
-# 设置文件名格式（歌名 - 歌手）
-if [ -f $DATA_DIR/data/config.js ]; then
-    sed -i 's/"cache.namingPattern": "simple"/"cache.namingPattern": "name_singer"/' $DATA_DIR/data/config.js
-fi
 
 cat > $DATA_DIR/nginx/default.conf <<'NGINXEOF'
 server {
@@ -151,6 +147,7 @@ services:
       - BIND_IP=0.0.0.0
       - DATA_PATH=/server/data
       - LOG_PATH=/server/data/logs
+      - CACHE_NAMING_PATTERN=name_singer
     volumes:
       - $DATA_DIR/data:/server/data
       
@@ -198,12 +195,6 @@ docker compose up -d
 
 sleep 8
 
-# 设置文件名格式（歌名 - 歌手）
-if [ -f $DATA_DIR/data/config.js ]; then
-    sed -i 's/"cache.namingPattern": "simple"/"cache.namingPattern": "name_singer"/' $DATA_DIR/data/config.js
-    docker restart lxserver
-    sleep 3
-fi
 echo ""
 echo "=== 安装成功 ==="
 echo "访问地址: http://本机IP:$PORT"
