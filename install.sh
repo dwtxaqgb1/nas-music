@@ -57,78 +57,44 @@ read -p "加速地址: " mirror_prefix
 GITHUB_RAW="${mirror_prefix}https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
 echo "实际下载地址: $GITHUB_RAW"
 
-# 确认
-echo ""
-echo "=========================================="
-echo "    安装配置确认"
-echo "=========================================="
-echo "端口:       $PORT"
-echo "密码:       $PASSWORD"
-echo "数据目录:   $DATA_DIR"
-echo "音乐目录:   $MUSIC_DIR"
-echo "后端版本:   $LX_VERSION"
-echo "下载源:     $GITHUB_RAW"
-echo "=========================================="
-read -p "确认安装? [Y/n]: " confirm
-if [ "$confirm" = "n" ] || [ "$confirm" = "N" ]; then
-    echo "已取消"
-    exit 0
-fi
 
-# 安装方式
-echo ""
+# 安装方式选择
 echo "请选择安装方式:"
-echo "  1) 全新安装（保留旧数据）"
-echo "  2) 卸载后全新安装（清空所有数据）"
+echo "  1) 全新安装（清空所有数据）"
+echo "  2) 更新安装（保留数据）"
 read -p "请输入选项 [默认 1]: " install_mode
+install_mode=${install_mode:-1}
+
+# 默认值
+PORT=5200
+PASSWORD=admin123
+DATA_DIR=/opt/nas-music
+MUSIC_DIR=/opt/nas-music/music
+LX_VERSION=v2.0.2
+GITHUB_RAW="https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
+
+# 全新安装：清理旧容器和镜像
+if [ "$install_mode" = "1" ]; then
+    echo "全新安装，清理旧版本..."
+    docker stop nas-music nas-music-lx nas-music-sidecar 2>/dev/null
+    docker rm nas-music nas-music-lx nas-music-sidecar 2>/dev/null
+    pkill -f lx_bridge.py 2>/dev/null
+    rm -rf $DATA_DIR
+fi
+
+# 更新安装：只停容器，保留数据
 if [ "$install_mode" = "2" ]; then
-    echo "卸载旧版本..."
-    docker-compose -f $DATA_DIR/docker-compose.yml down 2>/dev/null
-    docker stop nas-music nas-music-lx 2>/dev/null
-    docker rm nas-music nas-music-lx 2>/dev/null
-    rm -rf $DATA_DIR/data
+    echo "更新安装，保留数据..."
+    docker stop nas-music nas-music-lx nas-music-sidecar 2>/dev/null
+    docker rm nas-music nas-music-lx nas-music-sidecar 2>/dev/null
+    pkill -f lx_bridge.py 2>/dev/null
 fi
 
-# 检查Docker
+echo "端口: $PORT"
+echo "密码: $PASSWORD"
+echo "数据目录: $DATA_DIR"
+echo "版本: $LX_VERSION"
 echo ""
-if ! command -v docker &> /dev/null; then
-    echo "错误：未检测到Docker，请先安装Docker"
-    exit 1
-fi
-
-# 检查docker-compose
-if ! command -v docker-compose &> /dev/null; then
-    COMPOSE="docker compose"
-else
-    COMPOSE="docker-compose"
-fi
-
-# 创建目录
-echo "创建目录..."
-mkdir -p $DATA_DIR/data
-mkdir -p $MUSIC_DIR
-mkdir -p $DATA_DIR/web
-
-# 下载前端文件
-echo "下载前端文件..."
-curl -sSL "$GITHUB_RAW/app/web/index.html" -o $DATA_DIR/web/index.html
-curl -sSL "$GITHUB_RAW/app/web/app.js" -o $DATA_DIR/web/app.js
-curl -sSL "$GITHUB_RAW/app/web/style.css" -o $DATA_DIR/web/style.css
-curl -sSL "$GITHUB_RAW/app/lx_bridge.py" -o $DATA_DIR/lx_bridge.py
-
-if [ ! -s $DATA_DIR/web/index.html ] || [ ! -s $DATA_DIR/web/app.js ]; then
-    echo "错误：前端文件下载失败，请检查加速地址"
-    exit 1
-fi
-echo "前端文件下载成功"
-
-# 检查前端文件是否下载成功
-if [ ! -s $DATA_DIR/web/index.html ] || [ ! -s $DATA_DIR/web/app.js ]; then
-    echo "错误：前端文件下载失败，请检查网络或加速地址"
-    exit 1
-fi
-echo "前端文件下载成功"
-
 
 # 创建目录
 mkdir -p $DATA_DIR/data
@@ -146,7 +112,7 @@ curl -sSL "$GITHUB_RAW/app/web/style.css" -o $DATA_DIR/web/style.css
 curl -sSL "$GITHUB_RAW/app/lx_bridge.py" -o $DATA_DIR/lx_bridge.py
 curl -sSL "$GITHUB_RAW/app/sidecar/server.js" -o $DATA_DIR/sidecar/server.js
 
-# nginx配置（复用fpk）
+# nginx配置
 cat > $DATA_DIR/nginx/default.conf <<'NGINXEOF'
 server {
     listen 80;
@@ -187,7 +153,7 @@ server {
 }
 NGINXEOF
 
-# docker-compose（3容器）
+# docker-compose
 cat > $DATA_DIR/docker-compose.yml <<EOF
 services:
   lxserver:
@@ -246,13 +212,12 @@ EOF
 
 # 启动bridge
 echo "启动bridge..."
-pkill -f lx_bridge.py 2>/dev/null
 SOURCE_DIR=$DATA_DIR/data/users/source/_open nohup python3 $DATA_DIR/lx_bridge.py 8773 > $DATA_DIR/bridge.log 2>&1 &
 
 # 启动容器
 echo "启动容器..."
 cd $DATA_DIR
-$COMPOSE up -d
+docker compose up -d
 
 sleep 5
 echo ""
