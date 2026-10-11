@@ -49,12 +49,13 @@ case ${ver_sel:-1} in
     *) LX_VERSION=v2.0.2 ;;
 esac
 
-# 6. GitHub加速地址
+# 6. 加速地址
 echo ""
-read -p "请输入GitHub加速地址 [默认直连, 输入1使用加速]: " mirror_sel
-if [ "$mirror_sel" = "1" ]; then
-    GITHUB_RAW="https://ghproxy.net/https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
-fi
+echo "加速地址（留空默认直连GitHub）"
+echo "如国内访问慢，输入加速地址前缀，例如：https://ghproxy.net/"
+read -p "加速地址: " mirror_prefix
+GITHUB_RAW="${mirror_prefix}https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
+echo "实际下载地址: $GITHUB_RAW"
 
 # 确认
 echo ""
@@ -113,6 +114,12 @@ echo "下载前端文件..."
 curl -sSL "$GITHUB_RAW/app/web/index.html" -o $DATA_DIR/web/index.html
 curl -sSL "$GITHUB_RAW/app/web/app.js" -o $DATA_DIR/web/app.js
 curl -sSL "$GITHUB_RAW/app/web/style.css" -o $DATA_DIR/web/style.css
+
+if [ ! -s $DATA_DIR/web/index.html ] || [ ! -s $DATA_DIR/web/app.js ]; then
+    echo "错误：前端文件下载失败，请检查加速地址"
+    exit 1
+fi
+echo "前端文件下载成功"
 
 # 检查前端文件是否下载成功
 if [ ! -s $DATA_DIR/web/index.html ] || [ ! -s $DATA_DIR/web/app.js ]; then
