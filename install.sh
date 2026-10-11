@@ -44,8 +44,14 @@ case ${ver_sel:-1} in
     *) LX_VERSION=v2.0.2 ;;
 esac
 
+# 6. 加速地址
+echo ""
+echo "GitHub加速地址（留空直连，如国内慢可填 https://ghproxy.net/）"
+read -p "加速地址: " mirror_prefix
+GITHUB_RAW="${mirror_prefix}https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
+echo "下载源: $GITHUB_RAW"
+
 MUSIC_DIR=$DATA_DIR/music
-GITHUB_RAW="https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
 
 # 全新安装
 if [ "$install_mode" = "1" ]; then
