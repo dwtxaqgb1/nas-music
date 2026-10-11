@@ -1,54 +1,54 @@
-# NAS音乐搜索下载
+# NAS歌曲下载
 
-基于落雪音乐(lxserver)的NAS音乐搜索、播放与下载工具。
+基于落雪音乐的NAS音乐下载系统，支持搜索、播放、下载音源。
 
 ## 功能
 
-- 音乐搜索、在线播放
-- 排行榜浏览
-- 歌单收藏
-- 批量下载到NAS
-- 音源管理（上传/导入/导出/启用禁用）
-- 边下边播 / 下完再播
-- 管理密码保护
-- 手机端自适应
+- 音乐搜索、在线播放、下载
+- 音源仓库管理，支持导入/导出/删除音源
+- 播放模式切换（边下边播/下完再播）
+- 密码保护
+- 支持自定义音源JS
 
-## 一键安装
-
-适用于任何安装了Docker的Linux系统：
+## 一键安装（推荐）
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main/install.sh)
+bash <(curl -sSL https://ghproxy.net/https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main/install.sh)
 ```
 
-安装脚本会自动：
-1. 创建目录
-2. 下载镜像
-3. 启动服务
-4. 显示访问地址和密码
+交互式安装向导，会询问：
+- Web端口（默认5200）
+- 管理密码（默认admin123）
+- 数据目录
+- 音乐下载目录
+- 落雪后端版本（v2.0.2稳定版 / latest最新版）
+- GitHub加速地址（国内访问慢可填，留空直连）
+- 安装方式（全新安装/卸载后安装）
 
-## 配置说明
+## 系统要求
 
-安装前可修改脚本顶部的配置项：
+- Linux系统（X86/ARM均可）
+- 已安装Docker和Docker Compose
 
-| 配置项 | 默认值 | 说明 |
-|--------|--------|------|
-| PORT | 5200 | Web访问端口 |
-| PASSWORD | admin123 | 管理密码 |
-| DATA_DIR | /opt/nas-music | 数据目录 |
-| MUSIC_DIR | /opt/nas-music/music | 歌曲下载目录 |
-| LX_VERSION | v2.0.2 | 落雪后端版本 |
+## 访问
+
+安装完成后访问 `http://NAS_IP:5200`，默认密码 `admin123`。
 
 ## 常用命令
 
 ```bash
-cd /opt/nas-music
-docker-compose logs -f    # 查看日志
-docker-compose restart    # 重启
-docker-compose down       # 停止
-docker-compose up -d      # 启动
+# 查看日志
+cd /opt/nas-music && docker compose logs -f
+
+# 重启
+cd /opt/nas-music && docker compose restart
+
+# 停止
+cd /opt/nas-music && docker compose down
+
+# 卸载
+docker stop nas-music nas-music-lx nas-music-sidecar
+docker rm nas-music nas-music-lx nas-music-sidecar
+rm -rf /opt/nas-music
+pkill -f lx_bridge.py
 ```
-
-## 飞牛fnOS安装
-
-下载Release中的fpk文件，在飞牛应用中心安装即可。
