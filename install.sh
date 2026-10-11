@@ -46,8 +46,9 @@ esac
 
 # 6. 加速地址
 echo ""
-echo "GitHub加速地址（留空直连，如国内慢可填 https://ghproxy.net/）"
-read -p "加速地址: " mirror_prefix
+echo "GitHub加速地址"
+read -p "加速地址 [默认 https://ghproxy.net/]: " mirror_prefix
+mirror_prefix=${mirror_prefix:-https://ghproxy.net/}
 GITHUB_RAW="${mirror_prefix}https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
 echo "下载源: $GITHUB_RAW"
 
