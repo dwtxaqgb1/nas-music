@@ -247,7 +247,7 @@ EOF
 # 启动bridge
 echo "启动bridge..."
 pkill -f lx_bridge.py 2>/dev/null
-nohup python3 $DATA_DIR/lx_bridge.py > $DATA_DIR/bridge.log 2>&1 &
+SOURCE_DIR=$DATA_DIR/data/users/source/_open nohup python3 $DATA_DIR/lx_bridge.py 8773 > $DATA_DIR/bridge.log 2>&1 &
 
 # 启动容器
 echo "启动容器..."
