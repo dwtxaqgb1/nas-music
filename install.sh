@@ -74,6 +74,20 @@ if [ "$confirm" = "n" ] || [ "$confirm" = "N" ]; then
     exit 0
 fi
 
+# 安装方式
+echo ""
+echo "请选择安装方式:"
+echo "  1) 全新安装（保留旧数据）"
+echo "  2) 卸载后全新安装（清空所有数据）"
+read -p "请输入选项 [默认 1]: " install_mode
+if [ "$install_mode" = "2" ]; then
+    echo "卸载旧版本..."
+    docker-compose -f $DATA_DIR/docker-compose.yml down 2>/dev/null
+    docker stop nas-music 2>/dev/null
+    docker rm nas-music 2>/dev/null
+    rm -rf $DATA_DIR/data
+fi
+
 # 检查Docker
 echo ""
 if ! command -v docker &> /dev/null; then
