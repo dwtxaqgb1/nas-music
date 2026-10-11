@@ -196,7 +196,14 @@ echo "启动容器..."
 cd $DATA_DIR
 docker compose up -d
 
-sleep 5
+sleep 8
+
+# 设置文件名格式（歌名 - 歌手）
+if [ -f $DATA_DIR/data/config.js ]; then
+    sed -i 's/"cache.namingPattern": "simple"/"cache.namingPattern": "name_singer"/' $DATA_DIR/data/config.js
+    docker restart lxserver
+    sleep 3
+fi
 echo ""
 echo "=== 安装成功 ==="
 echo "访问地址: http://本机IP:$PORT"
