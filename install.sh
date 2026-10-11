@@ -1,64 +1,13 @@
 #!/bin/bash
 # ============================================
-# NAS音乐交互式安装向导
+# NAS音乐安装脚本
 # ============================================
 
 echo "=========================================="
-echo "    NAS音乐安装向导"
+echo "    NAS音乐安装"
 echo "=========================================="
 echo ""
 
-# 默认值
-PORT=5200
-PASSWORD=admin123
-DATA_DIR=/opt/nas-music
-MUSIC_DIR=/opt/nas-music/music
-LX_VERSION=v2.0.2
-GITHUB_RAW="https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
-
-# 1. 端口
-read -p "请输入Web端口 [默认 $PORT]: " input
-PORT=${input:-$PORT}
-
-# 2. 密码
-read -p "请输入管理密码 [默认 $PASSWORD]: " input
-PASSWORD=${input:-$PASSWORD}
-
-# 3. 数据目录
-read -p "请输入数据目录 [默认 $DATA_DIR]: " input
-DATA_DIR=${input:-$DATA_DIR}
-
-# 4. 音乐目录
-read -p "请输入音乐下载目录 [默认 $MUSIC_DIR]: " input
-MUSIC_DIR=${input:-$MUSIC_DIR}
-
-# 5. 后端版本
-echo ""
-echo "请选择落雪后端版本:"
-echo "  1) v2.0.2 (稳定版, 推荐)"
-echo "  2) v2.1.0"
-echo "  3) v2.1.1"
-echo "  4) v2.1.2"
-echo "  5) latest (最新版)"
-read -p "请输入选项 [默认 1]: " ver_sel
-case ${ver_sel:-1} in
-    2) LX_VERSION=v2.1.0 ;;
-    3) LX_VERSION=v2.1.1 ;;
-    4) LX_VERSION=v2.1.2 ;;
-    5) LX_VERSION=latest ;;
-    *) LX_VERSION=v2.0.2 ;;
-esac
-
-# 6. 加速地址
-echo ""
-echo "加速地址（留空默认直连GitHub）"
-echo "如国内访问慢，输入加速地址前缀，例如：https://ghproxy.net/"
-read -p "加速地址: " mirror_prefix
-GITHUB_RAW="${mirror_prefix}https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
-echo "实际下载地址: $GITHUB_RAW"
-
-
-# 安装方式选择
 echo "请选择安装方式:"
 echo "  1) 全新安装（清空所有数据）"
 echo "  2) 更新安装（保留数据）"
@@ -73,7 +22,7 @@ MUSIC_DIR=/opt/nas-music/music
 LX_VERSION=v2.0.2
 GITHUB_RAW="https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
 
-# 全新安装：清理旧容器和镜像
+# 全新安装
 if [ "$install_mode" = "1" ]; then
     echo "全新安装，清理旧版本..."
     docker stop nas-music nas-music-lx nas-music-sidecar 2>/dev/null
@@ -82,7 +31,7 @@ if [ "$install_mode" = "1" ]; then
     rm -rf $DATA_DIR
 fi
 
-# 更新安装：只停容器，保留数据
+# 更新安装
 if [ "$install_mode" = "2" ]; then
     echo "更新安装，保留数据..."
     docker stop nas-music nas-music-lx nas-music-sidecar 2>/dev/null
@@ -96,7 +45,6 @@ echo "数据目录: $DATA_DIR"
 echo "版本: $LX_VERSION"
 echo ""
 
-# 创建目录
 mkdir -p $DATA_DIR/data
 mkdir -p $DATA_DIR/music
 mkdir -p $DATA_DIR/cache
@@ -104,7 +52,6 @@ mkdir -p $DATA_DIR/web
 mkdir -p $DATA_DIR/nginx
 mkdir -p $DATA_DIR/sidecar
 
-# 下载文件
 echo "下载文件..."
 curl -sSL "$GITHUB_RAW/app/web/index.html" -o $DATA_DIR/web/index.html
 curl -sSL "$GITHUB_RAW/app/web/app.js" -o $DATA_DIR/web/app.js
@@ -112,39 +59,31 @@ curl -sSL "$GITHUB_RAW/app/web/style.css" -o $DATA_DIR/web/style.css
 curl -sSL "$GITHUB_RAW/app/lx_bridge.py" -o $DATA_DIR/lx_bridge.py
 curl -sSL "$GITHUB_RAW/app/sidecar/server.js" -o $DATA_DIR/sidecar/server.js
 
-# nginx配置
 cat > $DATA_DIR/nginx/default.conf <<'NGINXEOF'
 server {
     listen 80;
     server_name _;
-
     location = / {
         proxy_pass http://lxserver:9527/index.html;
     }
-
     location = /api/admin/password {
         proxy_pass http://sidecar:3001;
         proxy_set_header Content-Type application/json;
     }
-
     location /api/v1/ {
         proxy_pass http://host.docker.internal:8773/api/v1/;
         proxy_set_header Host $host;
     }
-
     location /stream/ {
         proxy_pass http://host.docker.internal:8773/stream/;
         proxy_buffering off;
     }
-
     location /cover/ {
         proxy_pass http://host.docker.internal:8773/cover/;
     }
-
     location ~ ^/(list-saved|search-sources|fetch-source|save-source|delete-saved|export-source|download-saved|set-token|get-token|set_playmode|get_playmode|get-mirror|set-mirror|extract-zip) {
         proxy_pass http://host.docker.internal:8773;
     }
-
     location / {
         proxy_pass http://lxserver:9527;
         proxy_set_header Host $host;
@@ -153,7 +92,6 @@ server {
 }
 NGINXEOF
 
-# docker-compose
 cat > $DATA_DIR/docker-compose.yml <<EOF
 services:
   lxserver:
@@ -176,7 +114,6 @@ services:
       - $DATA_DIR/web:/server/public
     networks:
       - nas-music-net
-
   sidecar:
     image: node:20-alpine
     container_name: nas-music-sidecar
@@ -189,7 +126,6 @@ services:
     networks:
       - nas-music-net
     command: node /app/server.js
-
   nginx:
     image: nginx:alpine
     container_name: nas-music
@@ -205,16 +141,13 @@ services:
       - nas-music-net
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
 networks:
   nas-music-net:
 EOF
 
-# 启动bridge
 echo "启动bridge..."
 SOURCE_DIR=$DATA_DIR/data/users/source/_open nohup python3 $DATA_DIR/lx_bridge.py 8773 > $DATA_DIR/bridge.log 2>&1 &
 
-# 启动容器
 echo "启动容器..."
 cd $DATA_DIR
 docker compose up -d
