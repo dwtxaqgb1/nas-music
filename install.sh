@@ -129,8 +129,24 @@ if [ ! -s $DATA_DIR/web/index.html ] || [ ! -s $DATA_DIR/web/app.js ]; then
 fi
 echo "前端文件下载成功"
 
-# 生成nginx配置
+
+# 创建目录
+mkdir -p $DATA_DIR/data
+mkdir -p $DATA_DIR/music
+mkdir -p $DATA_DIR/cache
+mkdir -p $DATA_DIR/web
 mkdir -p $DATA_DIR/nginx
+mkdir -p $DATA_DIR/sidecar
+
+# 下载文件
+echo "下载文件..."
+curl -sSL "$GITHUB_RAW/app/web/index.html" -o $DATA_DIR/web/index.html
+curl -sSL "$GITHUB_RAW/app/web/app.js" -o $DATA_DIR/web/app.js
+curl -sSL "$GITHUB_RAW/app/web/style.css" -o $DATA_DIR/web/style.css
+curl -sSL "$GITHUB_RAW/app/lx_bridge.py" -o $DATA_DIR/lx_bridge.py
+curl -sSL "$GITHUB_RAW/app/sidecar/server.js" -o $DATA_DIR/sidecar/server.js
+
+# nginx配置（复用fpk）
 cat > $DATA_DIR/nginx/default.conf <<'NGINXEOF'
 server {
     listen 80;
@@ -138,6 +154,11 @@ server {
 
     location = / {
         proxy_pass http://lxserver:9527/index.html;
+    }
+
+    location = /api/admin/password {
+        proxy_pass http://sidecar:3001;
+        proxy_set_header Content-Type application/json;
     }
 
     location /api/v1/ {
@@ -166,23 +187,42 @@ server {
 }
 NGINXEOF
 
-# 生成docker-compose.yml
-echo "生成配置文件..."
+# docker-compose（3容器）
 cat > $DATA_DIR/docker-compose.yml <<EOF
 services:
   lxserver:
     image: xcq0607/lxserver:$LX_VERSION
     container_name: nas-music-lx
     restart: unless-stopped
+    expose:
+      - "9527"
     environment:
+      - NODE_ENV=production
       - FRONTEND_PASSWORD=$PASSWORD
       - PORT=9527
+      - BIND_IP=0.0.0.0
+      - DATA_PATH=/server/data
+      - LOG_PATH=/server/data/logs
     volumes:
       - $DATA_DIR/data:/server/data
-      - $MUSIC_DIR:/server/cache
+      - $DATA_DIR/music:/server/music
+      - $DATA_DIR/cache:/server/cache
       - $DATA_DIR/web:/server/public
     networks:
       - nas-music-net
+
+  sidecar:
+    image: node:20-alpine
+    container_name: nas-music-sidecar
+    restart: unless-stopped
+    expose:
+      - "3001"
+    volumes:
+      - $DATA_DIR/sidecar/server.js:/app/server.js:ro
+      - $DATA_DIR/data:/data
+    networks:
+      - nas-music-net
+    command: node /app/server.js
 
   nginx:
     image: nginx:alpine
@@ -194,6 +234,7 @@ services:
       - $DATA_DIR/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - lxserver
+      - sidecar
     networks:
       - nas-music-net
     extra_hosts:
@@ -203,19 +244,18 @@ networks:
   nas-music-net:
 EOF
 
-# 启动
-echo "拉取镜像并启动服务..."
+# 启动bridge
+echo "启动bridge..."
+pkill -f lx_bridge.py 2>/dev/null
+nohup python3 $DATA_DIR/lx_bridge.py > $DATA_DIR/bridge.log 2>&1 &
+
+# 启动容器
+echo "启动容器..."
 cd $DATA_DIR
 $COMPOSE up -d
 
-echo "等待服务启动..."
 sleep 5
-
-if $COMPOSE ps | grep -q "Up"; then
-    echo ""
-    echo "=== 安装成功 ==="
-    echo "访问地址: http://本机IP:$PORT"
-    echo "管理密码: $PASSWORD"
-else
-    echo "启动失败，请查看日志: cd $DATA_DIR && $COMPOSE logs"
-fi
+echo ""
+echo "=== 安装成功 ==="
+echo "访问地址: http://本机IP:$PORT"
+echo "管理密码: $PASSWORD"
