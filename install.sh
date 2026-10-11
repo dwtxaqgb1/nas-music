@@ -49,7 +49,7 @@ case ${ver_sel:-1} in
     *) LX_VERSION=v2.0.2 ;;
 esac
 
-# 6. 加速地址
+# 7. 加速地址
 echo ""
 echo "GitHub加速地址"
 read -p "加速地址 [默认 https://ghproxy.net/]: " mirror_prefix
@@ -57,7 +57,6 @@ mirror_prefix=${mirror_prefix:-https://ghproxy.net/}
 GITHUB_RAW="${mirror_prefix}https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
 echo "下载源: $GITHUB_RAW"
 
-MUSIC_DIR=$DATA_DIR/music
 
 # 全新安装
 if [ "$install_mode" = "1" ]; then
@@ -86,7 +85,7 @@ echo "版本: $LX_VERSION"
 echo ""
 
 mkdir -p $DATA_DIR/data
-mkdir -p $DATA_DIR/music
+mkdir -p $MUSIC_DIR
 mkdir -p $DATA_DIR/cache
 mkdir -p $DATA_DIR/web
 mkdir -p $DATA_DIR/nginx
@@ -149,7 +148,7 @@ services:
       - LOG_PATH=/server/data/logs
     volumes:
       - $DATA_DIR/data:/server/data
-      - $DATA_DIR/music:/server/music
+      - $MUSIC_DIR:/server/music
       - $DATA_DIR/cache:/server/cache
       - $DATA_DIR/web:/server/public
     networks:
