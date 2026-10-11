@@ -148,8 +148,8 @@ services:
       - LOG_PATH=/server/data/logs
     volumes:
       - $DATA_DIR/data:/server/data
-      - $MUSIC_DIR:/server/music
-      - $DATA_DIR/cache:/server/cache
+      
+      - $MUSIC_DIR:/server/cache
       - $DATA_DIR/web:/server/public
     networks:
       - nas-music-net
