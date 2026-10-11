@@ -50,6 +50,13 @@ fi
 echo "创建目录..."
 mkdir -p $DATA_DIR/data
 mkdir -p $MUSIC_DIR
+mkdir -p $DATA_DIR/web
+
+# 下载定制前端文件
+echo "下载前端文件..."
+curl -sSL "https://github.com/dwtxaqgb1/nas-music/raw/main/app/web/index.html" -o $DATA_DIR/web/index.html
+curl -sSL "https://github.com/dwtxaqgb1/nas-music/raw/main/app/web/app.js" -o $DATA_DIR/web/app.js
+curl -sSL "https://github.com/dwtxaqgb1/nas-music/raw/main/app/web/style.css" -o $DATA_DIR/web/style.css
 
 # 生成docker-compose.yml
 echo "生成配置文件..."
@@ -65,6 +72,7 @@ services:
     volumes:
       - $DATA_DIR/data:/server/data
       - $MUSIC_DIR:/server/cache
+      - $DATA_DIR/web:/server/public
     ports:
       - "$PORT:9527"
 EOF
