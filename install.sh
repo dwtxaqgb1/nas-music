@@ -81,6 +81,7 @@ echo ""
 echo "端口: $PORT"
 echo "密码: $PASSWORD"
 echo "数据目录: $DATA_DIR"
+echo "音乐目录: $MUSIC_DIR"
 echo "版本: $LX_VERSION"
 echo ""
 
