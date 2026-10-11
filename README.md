@@ -38,5 +38,5 @@ pkill -f lx_bridge.py
 
 ## 鸣谢
 
-- [落雪音乐 LX Music](https://github.com/lyswhut/lx-music-desktop) - 开源音乐播放器
-- [飞牛音乐链接](https://github.com/dwtxaqgb1/nas-music) - 本项目
+- [lxserver](https://github.com/XCQ0607/lxserver) - 落雪音乐后端
+- [飞牛音乐链接](https://github.com/javycoder/fnos_music_ext) - fnOS音乐插件
