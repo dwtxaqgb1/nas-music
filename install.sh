@@ -114,6 +114,7 @@ echo "下载前端文件..."
 curl -sSL "$GITHUB_RAW/app/web/index.html" -o $DATA_DIR/web/index.html
 curl -sSL "$GITHUB_RAW/app/web/app.js" -o $DATA_DIR/web/app.js
 curl -sSL "$GITHUB_RAW/app/web/style.css" -o $DATA_DIR/web/style.css
+curl -sSL "$GITHUB_RAW/app/lx_bridge.py" -o $DATA_DIR/lx_bridge.py
 
 if [ ! -s $DATA_DIR/web/index.html ] || [ ! -s $DATA_DIR/web/app.js ]; then
     echo "错误：前端文件下载失败，请检查加速地址"
@@ -137,6 +138,24 @@ server {
 
     location = / {
         proxy_pass http://lxserver:9527/index.html;
+    }
+
+    location /api/v1/ {
+        proxy_pass http://host.docker.internal:8773/api/v1/;
+        proxy_set_header Host $host;
+    }
+
+    location /stream/ {
+        proxy_pass http://host.docker.internal:8773/stream/;
+        proxy_buffering off;
+    }
+
+    location /cover/ {
+        proxy_pass http://host.docker.internal:8773/cover/;
+    }
+
+    location ~ ^/(list-saved|search-sources|fetch-source|save-source|delete-saved|export-source|download-saved|set-token|get-token|set_playmode|get_playmode|get-mirror|set-mirror|extract-zip) {
+        proxy_pass http://host.docker.internal:8773;
     }
 
     location / {
@@ -177,6 +196,8 @@ services:
       - lxserver
     networks:
       - nas-music-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   nas-music-net:
