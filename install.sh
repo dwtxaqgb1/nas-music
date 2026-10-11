@@ -53,7 +53,7 @@ esac
 echo ""
 read -p "请输入GitHub加速地址 [默认直连, 输入1使用加速]: " mirror_sel
 if [ "$mirror_sel" = "1" ]; then
-    GITHUB_RAW="https://github.dwtxaqgb1.eu.org/dwtxaqgb1/nas-music/raw/main"
+    GITHUB_RAW="https://ghproxy.net/https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
 fi
 
 # 确认
