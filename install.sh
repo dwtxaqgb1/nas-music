@@ -8,18 +8,43 @@ echo "    NAS音乐安装"
 echo "=========================================="
 echo ""
 
+# 1. 安装方式
 echo "请选择安装方式:"
 echo "  1) 全新安装（清空所有数据）"
 echo "  2) 更新安装（保留数据）"
 read -p "请输入选项 [默认 1]: " install_mode
 install_mode=${install_mode:-1}
 
-# 默认值
-PORT=5200
-PASSWORD=admin123
-DATA_DIR=/opt/nas-music
-MUSIC_DIR=/opt/nas-music/music
-LX_VERSION=v2.0.2
+# 2. 端口
+read -p "Web端口 [默认 5200]: " input
+PORT=${input:-5200}
+
+# 3. 密码
+read -p "管理密码 [默认 admin123]: " input
+PASSWORD=${input:-admin123}
+
+# 4. 数据目录
+read -p "数据目录 [默认 /opt/nas-music]: " input
+DATA_DIR=${input:-/opt/nas-music}
+
+# 5. 后端版本
+echo ""
+echo "落雪后端版本:"
+echo "  1) v2.0.2 (稳定版)"
+echo "  2) v2.1.0"
+echo "  3) v2.1.1"
+echo "  4) v2.1.2"
+echo "  5) latest (最新版)"
+read -p "请输入选项 [默认 1]: " ver_sel
+case ${ver_sel:-1} in
+    2) LX_VERSION=v2.1.0 ;;
+    3) LX_VERSION=v2.1.1 ;;
+    4) LX_VERSION=v2.1.2 ;;
+    5) LX_VERSION=latest ;;
+    *) LX_VERSION=v2.0.2 ;;
+esac
+
+MUSIC_DIR=$DATA_DIR/music
 GITHUB_RAW="https://raw.githubusercontent.com/dwtxaqgb1/nas-music/main"
 
 # 全新安装
@@ -39,6 +64,7 @@ if [ "$install_mode" = "2" ]; then
     pkill -f lx_bridge.py 2>/dev/null
 fi
 
+echo ""
 echo "端口: $PORT"
 echo "密码: $PASSWORD"
 echo "数据目录: $DATA_DIR"
