@@ -150,7 +150,7 @@ class H(BaseHTTPRequestHandler):
                 data = json.loads(body)
                 name = data.get("name","source.js")
                 content = data.get("content","")
-                src_dir = "/vol1/@appdata/com.nasmusic.download/data/users/source/_open"
+                src_dir = os.environ.get("SOURCE_DIR", "/vol1/@appdata/com.nasmusic.download/data/users/source/_open")
                 os.makedirs(src_dir, exist_ok=True)
                 safe = name.replace("/","_")
                 with open(f"{src_dir}/{safe}","w") as f: f.write(content)
@@ -186,9 +186,9 @@ class H(BaseHTTPRequestHandler):
 
             if u.path == "/list-saved":
                 files = []
-                if os.path.isdir("/vol1/@appdata/com.nasmusic.download/data/users/source/_open"):
-                    for f in os.listdir("/vol1/@appdata/com.nasmusic.download/data/users/source/_open"):
-                        fp = os.path.join("/vol1/@appdata/com.nasmusic.download/data/users/source/_open", f)
+                if os.path.isdir(os.environ.get("SOURCE_DIR", "/vol1/@appdata/com.nasmusic.download/data/users/source/_open")):
+                    for f in os.listdir(os.environ.get("SOURCE_DIR", "/vol1/@appdata/com.nasmusic.download/data/users/source/_open")):
+                        fp = os.path.join(os.environ.get("SOURCE_DIR", "/vol1/@appdata/com.nasmusic.download/data/users/source/_open"), f)
                         if os.path.isfile(fp) and f.endswith(".js"):
                             files.append({"name": f, "size": os.path.getsize(fp), "mtime": os.path.getmtime(fp)})
                 files.sort(key=lambda x: -x["mtime"])
@@ -197,7 +197,7 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/peek-saved":
                 name = u.query.split("name=")[1] if "name=" in u.query else ""
                 name = urllib.parse.unquote(name).replace("/","_")
-                fp = os.path.join("/vol1/@appdata/com.nasmusic.download/data/users/source/_open", name)
+                fp = os.path.join(os.environ.get("SOURCE_DIR", "/vol1/@appdata/com.nasmusic.download/data/users/source/_open"), name)
                 if os.path.exists(fp):
                     with open(fp, "r", encoding="utf-8") as f:
                         content = f.read()
@@ -207,7 +207,7 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/export-source":
                 name = u.query.split("name=")[1] if "name=" in u.query else ""
                 name = urllib.parse.unquote(name).replace("/","_")
-                fp = os.path.join("/vol1/@appdata/com.nasmusic.download/data/users/source/_open", name)
+                fp = os.path.join(os.environ.get("SOURCE_DIR", "/vol1/@appdata/com.nasmusic.download/data/users/source/_open"), name)
                 if os.path.exists(fp):
                     with open(fp,"rb") as f: data = f.read()
                     self.send_response(200)
@@ -223,14 +223,14 @@ class H(BaseHTTPRequestHandler):
                 body = self.rfile.read(length)
                 data = json.loads(body)
                 name = data.get("name","").replace("/","_")
-                fp = os.path.join("/vol1/@appdata/com.nasmusic.download/data/users/source/_open", name)
+                fp = os.path.join(os.environ.get("SOURCE_DIR", "/vol1/@appdata/com.nasmusic.download/data/users/source/_open"), name)
                 if os.path.exists(fp): os.remove(fp)
                 self._json(200, {"ok":True}); return
 
             if u.path == "/download-saved":
                 name = u.query.split("name=")[1] if "name=" in u.query else ""
                 name = urllib.parse.unquote(name).replace("/","_")
-                fp = os.path.join("/vol1/@appdata/com.nasmusic.download/data/users/source/_open", name)
+                fp = os.path.join(os.environ.get("SOURCE_DIR", "/vol1/@appdata/com.nasmusic.download/data/users/source/_open"), name)
                 if os.path.exists(fp):
                     with open(fp,"rb") as f: data = f.read()
                     self.send_response(200)
@@ -386,7 +386,7 @@ class H(BaseHTTPRequestHandler):
                     name = data.get("name","source.js")
                     content = data.get("content","")
                     # write file directly
-                    src_dir = "/vol1/@appdata/com.nasmusic.download/data/users/source/_open"
+                    src_dir = os.environ.get("SOURCE_DIR", "/vol1/@appdata/com.nasmusic.download/data/users/source/_open")
                     os.makedirs(src_dir, exist_ok=True)
                     safe = name.replace("/","_")
                     with open(f"{src_dir}/{safe}","w") as f: f.write(content)
