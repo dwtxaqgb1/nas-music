@@ -61,9 +61,10 @@ MUSIC_DIR=$DATA_DIR/music
 
 # 全新安装
 if [ "$install_mode" = "1" ]; then
-    echo "全新安装，清理旧版本..."
+    echo "全新安装，清理容器、镜像、数据..."
     docker stop nas-music nas-music-lx nas-music-sidecar 2>/dev/null
     docker rm nas-music nas-music-lx nas-music-sidecar 2>/dev/null
+    docker rmi xcq0607/lxserver:$LX_VERSION nginx:alpine node:20-alpine 2>/dev/null
     pkill -f lx_bridge.py 2>/dev/null
     rm -rf $DATA_DIR
 fi
