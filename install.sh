@@ -135,10 +135,8 @@ server {
     listen 80;
     server_name _;
 
-    location /api/ {
-        proxy_pass http://lxserver:9527;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+    location = / {
+        proxy_pass http://lxserver:9527/index.html;
     }
 
     location / {
