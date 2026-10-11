@@ -28,7 +28,11 @@ PASSWORD=${input:-admin123}
 read -p "数据目录 [默认 /opt/nas-music]: " input
 DATA_DIR=${input:-/opt/nas-music}
 
-# 5. 后端版本
+# 5. 音乐目录
+read -p "音乐下载目录 [默认 $DATA_DIR/music]: " input
+MUSIC_DIR=${input:-$DATA_DIR/music}
+
+# 6. 后端版本
 echo ""
 echo "落雪后端版本:"
 echo "  1) v2.0.2 (稳定版)"
