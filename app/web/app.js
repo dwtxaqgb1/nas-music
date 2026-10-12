@@ -391,8 +391,7 @@ function renderSongList(container, songs, context) {
         <div class="song-name">${esc(s.name)}</div>
         <div class="song-singer">${esc(s.singer)} · ${esc(s.albumName || s.album || '')}</div>
       </div>
-      <span class="song-quality">${esc(types)}</span>
-      <button class="song-play-btn" data-play="${i}">▶</button>
+            <button class="song-play-btn" data-play="${i}">▶</button>
     </div>`;
   }).join('');
   container._songs = songs;
@@ -1019,8 +1018,7 @@ async function loadDownloadHistory() {
       <span class="song-num">${num}</span>
       <div class="song-info"><div class="song-name">${esc(s.name)}</div></div>
       <span class="song-singer">${esc(s.singer)}</span>
-      <span class="song-quality">${meta}</span>
-      <button class="song-play-btn" data-play="${i}" title="播放">▶</button>
+            <button class="song-play-btn" data-play="${i}" title="播放">▶</button>
     </div>`;
   }).join('');
 
@@ -1425,6 +1423,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!el) return alert('未找到歌曲列表');
     const songs = getSelectedSongs(el);
     if (!songs.length) return alert('请先勾选歌曲');
+    if (songs.length > 1) return alert('获取链接只能选择一首歌');
     const q = await pickQuality('download');
     if (!q) return;
     downloadToNAS(songs, q);
@@ -1436,6 +1435,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!el) return alert('未找到歌曲列表');
     const songs = getSelectedSongs(el);
     if (!songs.length) return alert('请先勾选歌曲');
+    if (songs.length > 1) return alert('获取链接只能选择一首歌');
     const quality = await pickQuality('copylinks');
     if (!quality) return;
 
@@ -1516,6 +1516,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!el) return alert('未找到歌曲列表');
     const songs = getSelectedSongs(el);
     if (!songs.length) return alert('请先勾选歌曲');
+    if (songs.length > 1) return alert('获取链接只能选择一首歌');
     const name = prompt('歌单名称：', `我的歌单 ${new Date().toLocaleDateString()}`);
     if (!name) return;
     const newPl = { id: 'pl_' + Date.now(), name, list: songs };
