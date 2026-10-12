@@ -63,7 +63,7 @@ if [ "$install_mode" = "1" ]; then
     echo "全新安装，清理容器、镜像、数据..."
     docker stop nas-music nas-music-lx nas-music-sidecar 2>/dev/null
     docker rm nas-music nas-music-lx nas-music-sidecar 2>/dev/null
-    docker rmi ghcr.io/dwtxaqgb1/lxserver:$LX_VERSION nginx:alpine node:20-alpine 2>/dev/null
+    docker rmi xcq0607/lxserver:$LX_VERSION nginx:alpine node:20-alpine 2>/dev/null
     pkill -f lx_bridge.py 2>/dev/null
     rm -rf $DATA_DIR
 fi
@@ -135,7 +135,7 @@ NGINXEOF
 cat > $DATA_DIR/docker-compose.yml <<EOF
 services:
   lxserver:
-    image: ghcr.io/dwtxaqgb1/lxserver:$LX_VERSION
+    image: xcq0607/lxserver:$LX_VERSION
     container_name: nas-music-lx
     restart: unless-stopped
     expose:
